@@ -1,11 +1,35 @@
 const express = require('express');
 const router = express.Router();
 // 引入数据库
-const db = require('./../db/db')
+const connection = require('./../db/db')
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
 });
+
+/**
+ * 获取首页轮播图
+ */
+router.get('/api/homecasual', (req, res) => {
+  // 查询数据库数据的sql语句
+  let sqlStr = 'select * from pdd_homecasual'
+  // 执行sql语句
+  connection.query(sqlStr, (error, results, fields) => {
+    if (error) {
+      res.json({
+        code: 0,
+        message: '请求数据失败',
+        data: null
+      })
+    } else {
+      res.json({
+        code: 200,
+        message: '请求数据成功',
+        data: results
+      })
+    }
+  })
+})
 
 module.exports = router;
