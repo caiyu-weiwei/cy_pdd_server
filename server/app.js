@@ -6,8 +6,16 @@ const logger = require('morgan');
 
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
+const session = require('express-session')
 
 const app = express();
+
+app.use(session({
+  secret: '123456',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: true }
+}))
 
 // 跨域配置
 app.all("*", function(req, res, next) {
