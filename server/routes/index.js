@@ -32,4 +32,30 @@ router.get('/api/homecasual', (req, res) => {
   })
 })
 
+/**
+ * 推荐模块列表
+ */
+router.get('/api/recommendlist', (req, res) => {
+  const pageNo = req.query.pageNo || 1
+  const pageSize = req.query.pageSize || 20
+  // 查询数据库的sql语句
+  let sqlStr = 'select * from pdd_recommend limit ' + (pageNo-1)*pageSize + ',' + pageSize
+  // 执行查询语句
+  connection.query(sqlStr, (error, results, fields) => {
+    if (error) {
+      res.json({
+        code: 0,
+        message: '请求数据失败',
+        data: null
+      })
+    } else {
+      res.json({
+        code: 200,
+        message: '请求数据成功',
+        data: results
+      })
+    }
+  })
+})
+
 module.exports = router;
