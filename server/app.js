@@ -11,10 +11,13 @@ const session = require('express-session')
 const app = express();
 
 app.use(session({
-  secret: '123456',
+  secret: '123456', // 对session id 相关的cookie进行签名
   resave: false,
-  saveUninitialized: true,
-  cookie: { secure: true }
+  saveUninitialized: true, // 是否保存未初始化的会话
+  cookie: { 
+    secure: true,
+    maxAge: 1000 * 60 * 60 * 24 // 设置session中有效时长， 单位为毫秒
+  }
 }))
 
 // 跨域配置

@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 // 引入数据库
 const connection = require('./../db/db')
+// 引入svg-captcha验证码库
+const svgCaptcha = require('svg-captcha')
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -56,6 +58,23 @@ router.get('/api/recommendlist', (req, res) => {
       })
     }
   })
+})
+
+/**
+ * 获取一次性图像验证码
+ */
+router.get('/api/captcha', function(req, res) {
+  // 生产随机验证码
+  const captcha = svgCaptcha.create({
+    size: 4,
+    ignoreChars: '0o1i',
+    noise: 2,
+    color: true
+  })
+  console.log('req.session', req.session)
+  req.session.captcha = captcha.text.toLocaleLowerCase()
+  res.type('svg')
+  res.send(captcha.data)
 })
 
 module.exports = router;
