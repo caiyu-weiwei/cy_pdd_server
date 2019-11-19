@@ -5,6 +5,10 @@ const connection = require('./../db/db')
 // 引入svg-captcha验证码库
 const svgCaptcha = require('svg-captcha')
 
+const sms_util = require('../util/sms_util')
+
+// 存储用户信息
+let users = {}
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
@@ -75,6 +79,35 @@ router.get('/api/captcha', function(req, res) {
   req.session.captcha = captcha.text.toLocaleLowerCase()
   res.type('svg')
   res.send(captcha.data)
+})
+
+/**
+ * 短信验证码
+ */
+router.get('/api/send_code', function(req, res) {
+  // 获取手机号
+  let phone = req.query.phone
+  // 六位随机数
+  let code = sms_util.randomCode(6)
+  users[phone] = code
+
+  // 【短信】应用未上线，模板短信接收号码外呼受限
+  // sms_util.sendCode(phone, code, function (success) {
+  //   if (success) {
+  //     res.json({
+  //       code: 200,
+  //       message: '验证码发送成功',
+  //       data: null
+  //     })
+  //   } else {
+  //     res.json({
+  //       code: 0,
+  //       message: '验证码发送失败',
+  //       data: null
+  //     })
+  //   }
+  // })
+  res.json({ code: 200, message: '验证码发送成功', data: code })
 })
 
 module.exports = router;
