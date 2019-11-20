@@ -82,7 +82,7 @@ router.get('/api/captcha', function(req, res) {
 })
 
 /**
- * 短信验证码
+ * 获取短信验证码
  */
 router.get('/api/send_code', function(req, res) {
   // 获取手机号
@@ -108,6 +108,83 @@ router.get('/api/send_code', function(req, res) {
   //   }
   // })
   res.json({ code: 200, message: '验证码发送成功', data: code })
+})
+
+/**
+ * 手机短信验证码登录
+ */
+router.post('/api/login_code', function(req, res) {
+  // 获取手机号和验证码
+  const phone = req.body.phone
+  const code = req.body.code
+  // 验证短信验证码是否正确
+  if (users[phone] !== code) {
+    res.json({
+      code: 0,
+      message: '验证码错误！',
+      data: null
+    })
+    return
+  }
+  delete users[phone]
+  let sqlStr = 'select * from pdd_user_info where user_phone = ' + phone + ' limit 1'
+  connection.query(sqlStr, (error, results, fields) => {
+    if (error) {
+      res.json({
+        code: 0,
+        message: '数据查询失败！',
+        data: null
+      })
+    } else {
+      const result = JSON.parse(JSON.stringify(results))
+      if (result[0]) {
+        // 用户已存在
+        req.session.userId = result[0].id
+        res.json({
+          code: 200,
+          message: '成功找到用户！',
+          data: {
+            userId: result[0].id,
+            userName: result[0].user_name,
+            userPhone: result[0].user_phone
+          }
+        })
+      } else {
+        let insertStr = 'insert into pdd_user_info(user_name, user_phone) values (?, ?)'
+        let insertParams = [phone, phone]
+        connection.query(insertStr, insertParams, (error, results, fields) => {
+          const rest = JSON.parse(JSON.stringify(results))
+          console.log('rest', rest)
+          if (!error) {
+            let sqlStr = 'select * from pdd_user_info where id= ' + rest.insertId + ' limit 1'
+            console.log('sqlStr', sqlStr)
+            connection.query(sqlStr, (error, results, fields) => {
+              if (error) {
+                res.json({
+                  code: 0,
+                  message: '数据查询失败！',
+                  data: null
+                })
+              } else {
+                let result = JSON.parse(JSON.stringify(results))
+                res.json({
+                  code: 200,
+                  message: '成功找到用户！',
+                  data: {
+                    userId: result[0].id,
+                    userName: result[0].user_name,
+                    userPhone: result[0].user_phone
+                  }
+                })
+              }
+            })
+          }
+        })
+      }
+    }
+  })
+
+  
 })
 
 module.exports = router;
