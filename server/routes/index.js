@@ -269,4 +269,41 @@ router.post('/api/login_captcha', function(req, res) {
 
 })
 
+/**
+ * 获取用户信息
+ */
+router.get('/api/user_info', function(req, res) {
+  const userId = req.session.userId
+  let sqlStr = 'select * from pdd_user_info where id = ' + userId + ' limit 1'
+  connection.query(sqlStr, (error, results, fields) => {
+    if (error) {
+      res.json({
+        code: 0,
+        message: '用户查询失败！',
+        data: null
+      })
+      delete req.session.userId
+    } else {
+      results = JSON.parse(JSON.stringify(results))
+      if (!results[0]) {
+        res.json({
+          code: 1,
+          message: '用户不存在，请重新登录！',
+          data: null
+        })
+      } else {
+        res.json({
+          code: 200,
+          message: '用户查询成功！',
+          data: {
+            userId: results[0].id,
+            userName: results[0].user_name,
+            userPhone: results[0].user_phone
+          }
+        })
+      }
+    }
+  })
+})
+
 module.exports = router;
