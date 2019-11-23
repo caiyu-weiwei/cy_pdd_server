@@ -7,6 +7,8 @@ const svgCaptcha = require('svg-captcha')
 
 const sms_util = require('../util/sms_util')
 
+const md5 = require('blueimp-md5')
+
 // 存储用户信息
 let users = {}
 /* GET home page. */
@@ -75,8 +77,8 @@ router.get('/api/captcha', function(req, res) {
     noise: 2,
     color: true
   })
-  console.log('req.session', req.session)
-  req.session.captcha = captcha.text.toLocaleLowerCase()
+  req.session.captcha = captcha.text.toLowerCase()
+  console.log('图片验证码 req.session.captcha', req.session.captcha)
   res.type('svg')
   res.send(captcha.data)
 })
@@ -185,6 +187,86 @@ router.post('/api/login_code', function(req, res) {
   })
 
   
+})
+
+/**
+ * 用户名、密码登录
+ */
+router.post('/api/login_captcha', function(req, res) {
+  const user_name = req.body.userName
+  // 密码加密处理
+  const user_pwd = md5(req.body.pwd)
+  const captcha = req.body.captcha.toLowerCase()
+  if (captcha !== req.session.captcha) {
+    res.json({
+      code: 0,
+      message: '图形验证码错误！',
+      data: null
+    })
+  }
+  delete req.session.captcha
+  // 根据用户名查询用户信息 sql语句
+  let sqlStr = "select * from pdd_user_info where user_name = '" + user_name + "' limit 1"
+  console.log(sqlStr)
+  connection.query(sqlStr, (error, results, fields) => {
+    if (error) {
+      res.json({
+        code: 0,
+        message: '用户名错误，请输入正确的用户名！',
+        data: null
+      })
+    } else {
+      results = JSON.parse(JSON.stringify(results))
+      if (results[0]) {
+        if (results[0].user_pwd !== user_pwd) {
+          res.json({
+            code: 0,
+            message: '密码错误，请输入正确密码！',
+            data: null
+          })
+        } else {
+          res.json({
+            code: 200,
+            message: '登录成功！',
+            data: {
+              userId: results[0].id,
+              userName: results[0].user_name
+            }
+          })
+        }
+      } else {
+        let insertStr = 'insert into pdd_user_info(user_name, user_pwd) values (?, ?) '
+        let insertParams = [user_name, user_pwd]
+        connection.query(insertStr, insertParams, (error, results, fields) => {
+          if (!error) {
+            results = JSON.parse(JSON.stringify(results))
+            req.session.userId = results.insertId
+            let sqlStr = "select * from pdd_user_info where user_name= '" + user_name + "' limit 1"
+            connection.query(sqlStr, (error, results, fields) => {
+              results = JSON.parse(JSON.stringify(results))
+              if (error) {
+                res.json({
+                  code: 0,
+                  message: '数据查询失败！',
+                  data: null
+                })
+              } else {
+                res.json({
+                  code: 200,
+                  message: '登录成功！',
+                  data: {
+                    userId: results[0].id,
+                    userName: results[0].user_name
+                  }
+                })
+              }
+            })
+          }
+        })
+      }
+    }
+  })
+
 })
 
 module.exports = router;
