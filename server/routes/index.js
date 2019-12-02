@@ -306,4 +306,15 @@ router.get('/api/user_info', function(req, res) {
   })
 })
 
+/**
+ * 退出登录
+ */
+router.get('/api/logout', function(req, res) {
+  delete req.session.userId
+  res.json({
+    code: 200,
+    message: '退出登录成功'
+  })
+})
+
 module.exports = router;
